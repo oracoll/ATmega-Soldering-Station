@@ -4,14 +4,14 @@ int getRotary() {
   return (Count >> ROTARY_TYPE);
 }
 
-//检查按键
+//Check button
 void CheckLastButton() {
   if (lastbutton && digitalRead(BUTTON_PIN)) {
     delay(10);
     lastbutton = false;
   }
 }
-//返回对应层数的对象数
+//Returns the number of objects corresponding to the layer
 byte QueryMenuObject() {
   int SUM = 0;
   for (int i = 0; i < (MenuLevel); i++) SUM += Menu_table[i];
@@ -78,11 +78,11 @@ uint16_t getVIN() {
   return (result * Vcc / 179.474);      // 179.474 = 1023 * R13 / (R12 + R13)
 }
 
-//ADC中断服务
+//ADC interrupt service
 // ADC interrupt service routine
 EMPTY_INTERRUPT (ADC_vect);             // nothing to be done here
 
-//旋转编码器触发中断
+//Rotary encoder trigger interrupt
 // Pin change interrupt service routine for rotary encoder
 ISR (PCINT0_vect) {
   uint8_t a = PINB & 1;
@@ -101,15 +101,15 @@ ISR (PCINT0_vect) {
   }
 }
 
-//计算实际温度
+//Calculate the actual temperature
 // calculates real temperature value according to ADC reading and calibration values
 float calculateTemp(float t) {
   return PTemp[0] + RawTemp * PTemp[1] + RawTemp * RawTemp * PTemp[2] + RawTemp * RawTemp * RawTemp * PTemp[3];
 }
 
 /*
- * 温度控制
- * mode-> 0:以实际温度数值为基准 1:以ADC数值为基准(非PID模式)
+ * Temperature control
+ * mode-> 0: based on the actual temperature value 1: based on the ADC value (non-PID mode)
 */
 void Thermostat(bool mode) {
   // define Setpoint acoording to current working mode
@@ -131,7 +131,7 @@ void Thermostat(bool mode) {
       if ((CurrentTemp + 0.5) < Setpoint) Output = 0; else Output = 255;
     }
   } else {
-    gap = 0;  //此模式下不计算温度差
+    gap = 0;  //The temperature difference is not calculated in this mode
     if ((RawTemp + 0.5) < Setpoint) Output = 0; else Output = 255;
   }
   // set heater PWM
@@ -145,7 +145,7 @@ void Thermostat(bool mode) {
 
 // creates a short beep on the buzzer
 void beep() {
-  //体谅一下，没内存了，只能用原始的办法驱动无源蜂鸣器，否则我也不想牺牲宝贵响应资源换内存
+  //Please be considerate, there is no memory left, so I can only use the original method to drive the passive buzzer, otherwise I don't want to sacrifice precious response resources for memory
   if (BeepEnable) {
     for (uint8_t i = 0; i < 255; i++) {
       digitalWrite(BUZZER_PIN, HIGH);
@@ -156,7 +156,7 @@ void beep() {
   }
 }
 
-//设置旋转编码器的起始值
+//Set the start value of the rotary encoder
 // sets start values for rotary encoder
 void setRotary(int rmin, int rmax, int rstep, int rvalue) {
   CountMin  = rmin << ROTARY_TYPE;
@@ -213,7 +213,7 @@ void SENSORCheck(bool mode) {
   // checks if tip is present or currently inserted
   if (ShowTemp > 500) TipIsPresent = false;   // tip removed ?
   if (!TipIsPresent && (ShowTemp < 500)&&mode) {    // new tip inserted ?
-    //关闭加热
+    //Turn off the heating
 #if UsePMOS
     analogWrite(CONTROL_PIN, 0);
 #else

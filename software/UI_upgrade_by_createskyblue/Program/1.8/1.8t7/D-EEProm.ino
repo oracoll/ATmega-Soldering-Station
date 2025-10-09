@@ -1,17 +1,17 @@
-/*EEPROM可用性检查
-  作用：防止因为EEPROM损坏而载入了错误的运行参数导致参数生产安全事故
+/*EEPROM availability check
+  Function: Prevent safety accidents caused by loading incorrect operating parameters due to damaged EEPROM
 */
 void CheckEEPROM() {
   byte w, r;
   int pass = 0, fail = 0;
   for (int i = 0; i < EEPROM.length(); i++) {
-    //内存测试程序
+    //Memory test program
     w = random(0, 255);
     EEPROM[i] = w;
     r = EEPROM[i];
     if (w == r) pass++; else fail++;
     if (arduboy.nextFrame()) {
-      //显示测试数据
+      //Display test data
       arduboy.clear();
       arduboy.setTextSize(2);
       SetTextColor(0);
@@ -33,7 +33,7 @@ void CheckEEPROM() {
       arduboy.display();
     }
   }
-  //EEPROM存储器可用性检查失败
+  //EEPROM memory availability check failed
   while (fail != 0) {
     arduboy.clear();
     arduboy.setTextSize(2);
@@ -49,8 +49,8 @@ void CheckEEPROM() {
 
 }
 
-/*查看EEPROM内存
-   通过板载的旋转编码器可以上下滚动翻阅EEPROM中的数据
+/*View EEPROM memory
+   You can scroll up and down to view the data in the EEPROM through the onboard rotary encoder
 */
 void ViewEEPRom() {
   setRotary(0, 1023, 4, 0);
@@ -73,55 +73,55 @@ void ViewEEPRom() {
     arduboy.display();
   } while (digitalRead(BUTTON_PIN) || lastbutton);
 }
-/* 从EEPROM读取烙铁头参数
-    传入：烙铁头的序号
-    作用：把对应序号的烙铁头参数直接载入内存
-    原理：
-      1 计算地址
-      2 读取数据
+/* Read soldering iron tip parameters from EEPROM
+    Input: serial number of the soldering iron tip
+    Function: Directly load the parameters of the corresponding serial number soldering iron tip into memory
+    Principle:
+      1 Calculate the address
+      2 Read data
 */
 void GetEEPRomTip(byte n) {
   if (n <= TIPMAX) {
     uint16_t Counter = 21;
-    //跳转到目标地址
+    //Jump to target address
     Counter += (TIPNAMELENGTH + 1) * n;
     Counter += 5 * 4 * n;
-    //从EEPRom读取数据并载入内存
+    //Read data from EEPROM and load it into memory
     for (int i = 0; i < (TIPNAMELENGTH + 1); i++) TipName[i] = EEPROM.read(Counter++);
     for (int i = 0; i < 4; i++) EEPROM.get(Counter += 4, PTemp[i]);
   }
 }
 
-/* 把烙铁头参数写入EEPRom
-    传入：烙铁头的序号
-    作用：把对应序号的烙铁头参数从运行内存载入到EEPRom
-    原理：
-      1 计算地址
-      2 写入EEProm
+/* Write soldering iron tip parameters to EEPROM
+    Input: serial number of the soldering iron tip
+    Function: Load the parameters of the corresponding serial number soldering iron tip from running memory to EEPROM
+    Principle:
+      1 Calculate the address
+      2 Write to EEPROM
 */
 void PutEEPRomTip(byte n) {
   if (n <= TIPMAX) {
     uint16_t Counter = 21;
-    //跳转到目标地址
+    //Jump to target address
     Counter += (TIPNAMELENGTH + 1) * n;
     Counter += 5 * 4 * n;
-    //从EEPRom读取数据并载入内存
+    //Read data from EEPROM and load it into memory
     for (int i = 0; i < (TIPNAMELENGTH + 1); i++) EEPROM.update(Counter++, TipName[i]);
     for (int i = 0; i < 4; i++) EEPROM.put(Counter += 4, PTemp[i]);
   }
 }
 
-/* 从EEPROM删除某一项烙铁头参数
-    传入：烙铁头序号
-    作用：把序号后的烙铁头数据位覆盖移到序号的位置，实现删除数据的目的
+/* Delete a certain soldering iron tip parameter from EEPROM
+    Input: soldering iron tip serial number
+    Function: Overwrite and move the data bits of the soldering iron tip after the serial number to the position of the serial number to achieve the purpose of deleting data
 */
 void DelEEPRomTip(byte n) {
   if (n <= TIPMAX) {
     uint16_t Counter = 21;
-    //跳转到目标地址
+    //Jump to target address
     Counter += (TIPNAMELENGTH + 1) * n;
     Counter += 5 * 4 * n;
-    //开始覆盖移动后面的数据
+    //Start to overwrite and move the following data
     byte moveN = NumberOfTips - n - 1;
     while (moveN--) {
       for (int i = Counter; i < Counter + (TIPNAMELENGTH + 1) + 4 * 5; i++) EEPROM[i] = EEPROM[i + (TIPNAMELENGTH + 1) + 4 * 5];

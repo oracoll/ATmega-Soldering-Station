@@ -1,7 +1,7 @@
 /*
-//此片段用于DEBUG
+//This snippet is for DEBUG
 void HelpMeSerialer() {
-  //串口助手
+  //Serial port assistant
   if (Serial.available()) {
     char TmpChar = Serial.read();
     switch (TmpChar) {

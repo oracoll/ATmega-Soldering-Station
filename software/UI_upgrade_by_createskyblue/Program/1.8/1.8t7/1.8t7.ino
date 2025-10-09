@@ -1,12 +1,4 @@
 /*License: http://creativecommons.org/licenses/by-sa/3.0/
-   采用CC3.0协议共享此程序
-   您可以自由地
-  共享 — 在任何媒介以任何形式复制、发行本作品
-  演绎 — 修改、翻译或以本作品为基础进行创作
-  在任何用途下，甚至商业目的。
-  本许可协议为“自由文化作品（Free Cultural Works）”所接受。
-  只要你遵守许可协议条款，许可人就无法收回你的这些权利。
-
   Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
   This is a human-readable summary of (and not a substitute for) the license. Disclaimer.
   You are free to:
@@ -19,74 +11,40 @@
 // SolderingStation2
 //
 // ATmega328-controlled Soldering Station for Hakko T12 Tips.
-// 此v1.8t7版本功能简介
 // This 1.8t7 version of the code implements:
-// - 烙铁头温度实时监测
 // - Temperature measurement of the tip
-// - PID温度控制
 // - Direct or PID control of the heater
-// - 可以通过编码器进行控制温度
 // - Temperature control via rotary encoder
-// - 短按编码器进入短时升温模式
 // - Boost mode by short pressing rotary encoder switch
-// - 长按编码器进入主菜单
 // - Setup menu by long pressing rotary encoder switch
-// - 手柄震动检测（需要手柄含有震动传感器）
 // - Handle movement detection (by checking ball switch)
-// - 手柄连接检测（通过判断烙铁头温度是否能够被读取来实现）
 // - Iron unconnected detection (by idenfying invalid temperature readings)
-// - 定时器设定 - 随眠，关机时间
 // - Time driven sleep/power off mode if iron is unused (movement detection)
-// - 可以测量主控芯片电压以及温度
 // - Measurement of input voltage, Vcc and ATmega's internal temperature
-// - 在OLED上实现信息显示
 // - Information display on OLED
-// - 支持无源蜂鸣器
 // - Buzzer
-// - 允许设置不同烙铁头的温度校准值
 // - Calibrating and managing different soldering tips
-// - 设置被保存在EEPROM，掉电不丢失
 // - Storing user settings into the EEPROM
-// - 允许热插拔烙铁头，并弹出烙铁头配置选择菜单
 // - Tip change detection
-// - 芯片过热以及低电压报警
 // - Chip overheating and low voltage alarm
-// - 更好的实时温度条以及实时功率条
 // - Better real-time temperature bar and real-time power bar
-// - 拥有过渡动画
 // - Have transition animation
-// - 内置屏幕保护程序
 // - Built in screen saver
-// - 屏幕翻转设置
 // - Screen flip settings
-// - 内置英文、中文、日文语言包
 // - Built in English, Chinese and Japanese language pack
-// - 开机密码设置
 // - System Password
-// - 允许设置旋钮方向
 // - Knob direction setting menu
-// - 内嵌看门狗，宕机自动重启
 // - Watchdog timer automatic reset the MCU
 
 // - V1.8t7 New features:
-// ------ EEPROM可用性检查机制
 // ------ EEPROM availability check
-
-// ------ 允许保存最大30个烙铁头的配置
 // ------ 30 preservable soldering tip configurations
-
-// ------ 9段温度曲线拟合
 // ------ 9 segments of temperature curve fitting
 
 /*
-增加"EEPROM"和"RESET." 指令，可以给标签命名为指令的名字，点击标签即可执行
-关于"EEPROM"指令:查看EEPROM内容
-关于"RESET."指令：重置EEPROM *警告！ 你会失去所有烙铁头的温度校准数据!!!
-
-Add "EEPROM" and "RESET." to give the label the name of the instruction. Click the label to execute
-Regarding "EEPROM" instruction: View EEPROM contents
-Regarding "RESET." instruction: RESET EEPROM 
-* warning! You will lose all the temperature calibration data for the tip of the soldering iron!!
+Add "EEPROM" and "RESET." instructions, you can name the label as the instruction name, click the label to execute
+About the "EEPROM" instruction: View EEPROM content
+About the "RESET." instruction: Reset EEPROM *Warning! You will lose all temperature calibration data for the soldering iron tip!!!
 */
 
 
@@ -107,7 +65,7 @@ Regarding "RESET." instruction: RESET EEPROM
 
 
 bool lastbutton;
-#include <Arduboy2.h>  //注意 这里使用被阉割的图形库，只有绘图功能，并非通用的版本
+#include <Arduboy2.h>  //Note: This uses a stripped-down graphics library with only drawing functions, not a general-purpose version.
 Arduboy2 arduboy;
 
 #include <EEPROM.h>
@@ -178,12 +136,12 @@ uint8_t   MainScrType = MAINSCREEN;
 bool      PIDenable   = PID_ENABLE;
 bool      BeepEnable  = BEEP_ENABLE;
 
-//温度拟合
+//Temperature fitting
 #define TempP1 10.2675914764
 #define TempP2 1.7323191166
 #define TempP3 -0.0033245713
 #define TempP4 0.0000045338
-float    PTemp[4] = {TempP1, TempP2, TempP3, TempP4}; //温度拟合系数
+float    PTemp[4] = {TempP1, TempP2, TempP3, TempP4}; //Temperature fitting coefficient
 const uint16_t CalTemp[9] = {50, 100, 150, 200, 250, 300, 350, 400, 450};
 char      TipName[TIPNAMELENGTH] = {TIPNAME};
 uint8_t   CurrentTip   = 0;
@@ -218,57 +176,57 @@ uint32_t  Buttonmillis;
 uint8_t   GoneMinutes;
 uint8_t   GoneSeconds;
 uint8_t   SensorCounter = 255;
-//串口助手
+//Serial port assistant
 //int x, y, a, b;
-//欠压报警
+//Undervoltage alarm
 byte UnderVoltage = 0;
 // Control variables
 uint16_t  Time2settle = 300;
 
-//模拟数字滚轮 Numerical scrolling effect
+//Numerical scrolling effect
 int Value;
 int LastValue[3];
 int SlidingAnimationY[3];
 
-//开机密码 BootPassword
+//Boot Password
 int Password = 0;
 
-//屏幕保护-主题：密集运算
+//Screen saver - theme: intensive computing
 byte Line[4];
 
-//编码器旋转调整方向设定
+//Encoder rotation adjustment direction setting
 bool RotaryD = false;
 
-//开机非线性动画
+//Boot non-linear animation
 byte BootAnimationY = 64;
 
 // Specify the links and initial PID tuning parameters
 PID ctrl(&Input, &Output, &Setpoint, aggKp, aggKi, aggKd, REVERSE);
 
-//NMOS - PMOS软件切换
+//NMOS - PMOS software switching
 #define UsePMOS false
 
-//LANG 语言支持
-/*  0 - 中文 CHINESE
-    1 - 英文 ENGLISH
-    2 - 日语 x (此版本不支持)
+//LANG language support
+/*  0 - CHINESE
+    1 - ENGLISH
+    2 - Japanese x (not supported in this version)
 */
 byte LANG = 1;
 
 
 
 void setup() {
-  //设置看门狗自动复位
+  //Set watchdog to reset automatically
   set_wdt_mod(3, 7);
 
-  //启动arduboy内核
+  //Start arduboy kernel
   arduboy.begin();
   arduboy.setFrameRate(15);
 
   //Serial.begin(115200);
 
   // set the pin modes
-  //设置IO
+  //Set IO
   pinMode(SENSOR_PIN,   INPUT);
   pinMode(VIN_PIN,      INPUT);
   pinMode(BUZZER_PIN,   OUTPUT);
@@ -284,32 +242,32 @@ void setup() {
 #endif
   digitalWrite(BUZZER_PIN, LOW);        // must be LOW when buzzer not in use
 
-  //初始化ADC
+  //Initialize ADC
   //setup ADC
   ADCSRA |= bit (ADPS0) | bit (ADPS1) | bit (ADPS2);  // set ADC prescaler to 128
   ADCSRA |= bit (ADIE);                 // enable ADC interrupt
   interrupts ();                        // enable global interrupts
 
-  //初始化编码器IO
+  //Initialize encoder IO
   // setup pin change interrupt for rotary encoder
   PCMSK0 = bit (PCINT0);                // Configure pin change interrupt on Pin8
   PCICR  = bit (PCIE0);                 // Enable pin change interrupt
   PCIFR  = bit (PCIF0);                 // Clear interrupt flag
 
-  //从EEPROM读取设置
+  //Read settings from EEPROM
   // get default values from EEPROM
   GetEEPROM();
 
-  //设置屏幕反转状态
+  //Set screen flip state
   Flip(FlipState);
 
-  //设置屏幕亮度
-  SetOLEDLightLevel(32); //降低屏幕亮度 延长OLED使用寿命
+  //Set screen brightness
+  SetOLEDLightLevel(32); //Reduce screen brightness to extend OLED life
 
-  //初始化屏幕保护动画
+  //Initialize screen saver animation
   for (byte a = 0; a < 4; a++) Line[a] = 32 * a;
 
-  //密码保护
+  //Password protection
   BootPassword();
   // read supply voltages in mV
   Vcc = getVCC(); Vin = getVIN();
@@ -342,7 +300,7 @@ void setup() {
 void loop() {
   //HelpMeSerialer();
   ROTARYCheck();      // check rotary encoder (temp/boost setting, enter setup menu)
-  SLEEPCheck();       // check and activate/deactivate sleep modes
+  SLEEPCheck();       // check and activate/deavtivate sleep modes
   SENSORCheck(1);      // reads temperature and vibration switch of the iron
   Thermostat(0);       // heater control
   MainScreen();       // updates the main page on the OLED

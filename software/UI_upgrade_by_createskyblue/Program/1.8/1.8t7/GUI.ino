@@ -2,7 +2,7 @@
 // draws the main screen
 void MainScreen() {
   if (!(arduboy.nextFrame())) return;
-  //状态
+  //Status
   byte SysState;
   if (ShowTemp > 500) SysState = 0;
   else if (InOffMode) {
@@ -17,18 +17,18 @@ void MainScreen() {
     if (MainScrType) {
       arduboy.invert(1);
       arduboy.clear();
-      //详细信息页
-      arduboy.fillRect(0, 0, 128, 64, 1); //白底
+      //Details page
+      arduboy.fillRect(0, 0, 128, 64, 1); //White background
       arduboy.setTextSize(1);
       SetTextColor(0);
-      //预设名
-      //arduboy.drawSlowXYBitmap(0, 0, Tag, 16, 16, 0);
+      //Preset name
+      //arduboy.drawBitmap(0, 0, Tag, 16, 16, 0);
       arduboy.setCursor(2, 4); arduboy.print(TipName);
-      //显示状态
+      //Display status
       arduboy.setCursor(94, 5);
       switch (LANG) {
-        case 0: arduboy.drawSlowXYBitmap(95, 1, S_table[SysState], 28, 14, 0); break;  //中文 Chinese
-        default: //英文 English
+        case 0: arduboy.drawBitmap(95, 1, S_table[SysState], 28, 14, 0); break;  //Chinese
+        default: //English
           switch (SysState) {
             case 1: arduboy.print(F("OFF")); break;
             case 2: arduboy.print(F("SLEEP")); break;
@@ -40,34 +40,34 @@ void MainScreen() {
           } break;
       }
 
-      //运行状态图标
-      arduboy.drawSlowXYBitmap(74, 1, C_table[SysState], 14, 14, 0);
+      //Running status icon
+      arduboy.drawBitmap(74, 1, C_table[SysState], 14, 14, 0);
       arduboy.setTextSize(1);
 
-      //显示探头温度
+      //Display probe temperature
       DrawNumRect(0, 15, 5, ShowTemp);
 
-      //状态条
+      //Status bar
       DrawStatusBar(0);
 
-      //状态图标 以及 信息
-      //自动报警-图标闪烁
+      //Status icon and information
+      //Automatic alarm - icon flashes
       if (getChipTemp() < 80 || ((millis() * 4) / 1000) % 2) {
-        arduboy.setCursor(91, 20); arduboy.print(getChipTemp(), 1); arduboy.print((char)248); arduboy.print(F("C")); //芯片温度
-        arduboy.drawSlowXYBitmap(42, 1, Chip, 14, 14, 0);
+        arduboy.setCursor(91, 20); arduboy.print(getChipTemp(), 1); arduboy.print((char)248); arduboy.print(F("C")); //Chip temperature
+        arduboy.drawBitmap(42, 1, Chip, 14, 14, 0);
       }
       if ((float)Vin / 100 > UnderVoltage || ((millis() * 4) / 1000) % 2) {
-        arduboy.setCursor(91, 28); arduboy.print((float)getVIN() / 1000, 2); arduboy.print(F("V")); //输入电压
-        arduboy.drawSlowXYBitmap(58, 1, Lightning, 14, 14, 0);
+        arduboy.setCursor(91, 28); arduboy.print((float)getVIN() / 1000, 2); arduboy.print(F("V")); //Input voltage
+        arduboy.drawBitmap(58, 1, Lightning, 14, 14, 0);
       }
-      arduboy.setCursor(91, 36); arduboy.print((float)getVCC() / 1000, 3); arduboy.print(F("V")); //芯片电压
-      arduboy.setCursor(91, 44); arduboy.print(RawTemp, 0); //烙铁头热偶原始数据
+      arduboy.setCursor(91, 36); arduboy.print((float)getVCC() / 1000, 3); arduboy.print(F("V")); //Chip voltage
+      arduboy.setCursor(91, 44); arduboy.print(RawTemp, 0); //Soldering iron thermocouple raw data
 
 
 
 
       arduboy.display();
-      //警报声
+      //Alarm sound
       if (getChipTemp() > 80 && ((millis() * 4) / 1000) % 2 || (float)Vin / 100 < UnderVoltage && ((millis() * 4) / 1000) % 2) {
         beep();
         arduboy.invert(0);
@@ -93,36 +93,36 @@ void DrawNumRect(byte x, byte y, byte size, int n) {
   if (size != 6)arduboy.drawRect(1 + x, 1 + y, 89, 39, 0);
 }
 
-//绘制状态条
+//Draw status bar
 void DrawStatusBar(bool color) {
   SetTextColor(color);
   arduboy.setTextSize(1);
-  //温度条
-  //框
+  //Temperature bar
+  //Frame
   arduboy.drawRect(1, 54, 102, 9, color);
-  //条
+  //Bar
   if (ShowTemp <= 500) arduboy.fillRect(1, 54, map(ShowTemp, 0, 500, 2, 102), 9, color);
-  //指示部分
+  //Indicator part
   arduboy.fillRect(map(Setpoint, 0, 500, 2, 102) - 2, 55, 3, 7, color);
-  //先来个白底
+  //Add a white background first
   arduboy.fillRect(map(Setpoint, 0, 500, 2, 102) - 3, 63, 5, 1, color);
   arduboy.drawLine(map(Setpoint, 0, 500, 2, 102) - 1, 63, map(Setpoint, 0, 500, 2, 102) - 1, 54, !color);
 
-  //画指示针
-  arduboy.drawSlowXYBitmap(map(Setpoint, 0, 500, 2, 102) - 3, 60, Pointer, 5, 4, !color);
+  //Draw indicator needle
+  arduboy.drawBitmap(map(Setpoint, 0, 500, 2, 102) - 3, 60, Pointer, 5, 4, !color);
 
-  //功率条
+  //Power bar
   arduboy.drawRect(104, 54, 23, 9, color);
   arduboy.fillRect(104, 54, map(Output, 255, 0, 0, 23), 9, color);
 
   SetTextColor(!color);
-  //////////////进入反色////////////////////////////////
-  arduboy.setCursor(2, 55); arduboy.print(Setpoint, 0);//探头预设温度
-  arduboy.setCursor(105, 55); arduboy.print(map(Output, 255, 0, 0, 100)); arduboy.print(F("%")); //功率百分比
+  //////////////Enter reverse color////////////////////////////////
+  arduboy.setCursor(2, 55); arduboy.print(Setpoint, 0);//Probe preset temperature
+  arduboy.setCursor(105, 55); arduboy.print(map(Output, 255, 0, 0, 100)); arduboy.print(F("%")); //Power percentage
   SetTextColor(color);
 }
 
-//设置画笔颜色
+//Set brush color
 void SetTextColor(bool color) {
   arduboy.setTextBackground(!color);
   arduboy.setTextColor(color);
@@ -132,7 +132,7 @@ void SetTextColor(bool color) {
 // setup screen
 void SetupScreen() {
   arduboy.invert(0);
-  //关闭加热
+  //Turn off heating
 #if UsePMOS
   analogWrite(CONTROL_PIN, 0);
 #else
@@ -145,7 +145,7 @@ void SetupScreen() {
 
   while (repeat) {
     //arduboy.invert(0);
-    MenuLevel = 0; //默认打开主菜单
+    MenuLevel = 0; //Open the main menu by default
     selection = MenuScreen(selection);
     switch (selection) {
       case 0:   MenuLevel = 1; TipScreen();  repeat = false; break;
@@ -168,7 +168,7 @@ void SetupScreen() {
   setRotary(TEMP_MIN, TEMP_MAX, TEMP_STEP, SetTemp);
 }
 
-//设置滚轮方向
+//Set the direction of the scroll wheel
 void RotarySet() {
   bool Exit = false;
   float rad;
@@ -186,11 +186,11 @@ void RotarySet() {
 
     arduboy.fillRect(0, 0, 128, 64, color);
 
-    //仪表盘
+    //Dashboard
     arduboy.fillCircle(24 + 12 * cos(rad), 24 - 12 * sin(rad), 5, !color);
     arduboy.drawCircle(24, 24, 20, !color);
 
-    //右上角的模式提示文本
+    //Mode prompt text in the upper right corner
     arduboy.setCursor(55, 1);
     arduboy.setTextSize(2);
     arduboy.print(F("MODE "));
@@ -201,11 +201,11 @@ void RotarySet() {
       arduboy.print(F("+"));
       rad = ((-Setpoint - 60) / 360.0) * (2 * PI) + PI * 1 / 6;
     }
-    //右侧数字显示
+    //Digital display on the right
     DrawNumRect(55, 18, 4, ShowTemp);
-    //下端的状态条
+    //Status bar at the bottom
     DrawStatusBar(!color);
-    //退出条
+    //Exit bar
     arduboy.fillRect(0, 0, ExitBar, 4, !color);
     arduboy.display();
     CheckLastButton();
@@ -225,7 +225,7 @@ void RotarySet() {
   } while (!Exit);
   beep(); beep();
 }
-//显示设置菜单
+//Display settings menu
 // tip settings screen
 void ScreenSet() {
   uint8_t selection = 0;
@@ -238,12 +238,12 @@ void ScreenSet() {
       case 1:   FlipState = !FlipState; break;
       default:  repeat = false;      break;
     }
-    Flip(FlipState); //设置屏幕反转状态
+    Flip(FlipState); //Set screen flip state
   }
   UpdateEEPROM();
 }
 
-//预设设置菜单
+//Preset settings menu
 // tip settings screen
 void TipScreen() {
   uint8_t selection = 0;
@@ -262,7 +262,7 @@ void TipScreen() {
   }
 }
 
-//温控设置菜单
+//Temperature control settings menu
 // temperature settings screen
 void TempScreen() {
   uint8_t selection = 0;
@@ -283,7 +283,7 @@ void TempScreen() {
 }
 
 
-//定时器设置菜单
+//Timer settings menu
 // timer settings screen
 void TimerScreen() {
   uint8_t selection = 0;
@@ -302,8 +302,8 @@ void TimerScreen() {
   }
   UpdateEEPROM();
 }
-//英语支持
-//i-文本id c-居中
+//English support
+//i-text id c-center
 void Print_EN(byte i) {
   char buffer[11];
   byte a = 0;
@@ -314,7 +314,7 @@ void Print_EN(byte i) {
   arduboy.setCursor((128 - a * 6) / 2, 52);
   arduboy.print(buffer);
 }
-//菜单界面
+//Menu interface
 // menu screen
 uint8_t MenuScreen(uint8_t selected) {
   int SlidingAnimationX;
@@ -324,13 +324,13 @@ uint8_t MenuScreen(uint8_t selected) {
   SetTextColor(1);
   do {
     selected = getRotary();
-    //非线性滑动动画
+    //Non-linear sliding animation
     SlidingAnimationX += (selected - lastselected) * 56;
     if (SlidingAnimationX != 0) SlidingAnimationX += 0.5 * (-SlidingAnimationX);
     lastselected = selected;
   //  if (arduboy.nextFrame()) {
       arduboy.clear();
-      //绘制图标 如果有指定的话
+      //Draw icons if specified
       for (byte i = 0; i < 5; i++) if (selected - 2 + i >= 0 && selected - 2 + i < Menu_table[MenuLevel]) DrawApp(-72 + i * 56 + SlidingAnimationX, selected - 2 + i + QueryMenuObject());
       DrawAppText(selected + QueryMenuObject());
       arduboy.display();
@@ -348,16 +348,16 @@ uint8_t MenuScreen(uint8_t selected) {
   return selected;
 }
 
-//显示APP图标
+//Show APP icon
 void DrawApp(int x, byte appID) {
   DrawUIFrame(x, 0, 1);
-  drawSlowXYBitmapResize(x + 3, 3, Ico_table[appID], 14, 14, 3, 1);
+  drawBitmapResize(x + 3, 3, Ico_table[appID], 14, 14, 3, 1);
 }
 
-//显示APP对应的文本
+//Show the text corresponding to the APP
 void DrawAppText(byte appID) {
   //  arduboy.setCursor(0, 55); arduboy.print(appID);
-  if (LANG == 0) arduboy.drawSlowXYBitmap(48, 48, CN_table[appID], 36, 16, 1); else if (LANG == 2 && LANG_JP_State) {
+  if (LANG == 0) arduboy.drawBitmap(48, 48, CN_table[appID], 36, 16, 1); else if (LANG == 2 && LANG_JP_State) {
 #if LANG_JP_State
     drawText(48, 52, JP_table[appID], pgm_read_byte(&(JP_Length_table[appID])));
 #endif
@@ -370,7 +370,7 @@ void DrawAppText(byte appID) {
 
 void DrawUIFrame(int x, int y, bool color) {
   arduboy.fillRect(x, y, 48, 48, color);
-  arduboy.fillRect(x + 3, y + 3, 42, 42, !color); //雕空
+  arduboy.fillRect(x + 3, y + 3, 42, 42, !color); //Hollow out
   DrawPoint(x, y, 0);
   DrawPoint(x + 47, y, 0);
   DrawPoint(x, y + 47, 0);
@@ -385,9 +385,9 @@ void DrawPoint(int x, int y, bool color) {
   arduboy.drawPixel(x, y, color);
 }
 
-//FP 密集运算屏保
+//FP intensive computing screen saver
 void DrawIntensiveComputing() {
-  //关闭加热
+  //Turn off heating
 #if UsePMOS
   analogWrite(CONTROL_PIN, 0);
 #else
@@ -397,53 +397,53 @@ void DrawIntensiveComputing() {
   // while (1) {
   arduboy.clear();
 
-  //随机线条
+  //Random lines
   DrawIntensiveComputingLine();
 
   calculate = sin(millis() / 4000.0);
-  //模拟噪点
+  //Simulate noise
   for (int i = 0; i < calculate * 256 + 256; i++)  arduboy.drawPixel(random(0, 128), random(0, 64), 1);
-  //声效
+  //Sound effects
   if ((BeepEnable)) analogWrite(BUZZER_PIN, 64 + calculate * 64 + random(-8, 8));
-  //if ((BeepEnable)) tone(BUZZER_PIN, int(calculate * 300) + 500 + random(-50, 50));  //没必要浪费内存
+  //if ((BeepEnable)) tone(BUZZER_PIN, int(calculate * 300) + 500 + random(-50, 50));  //No need to waste memory
 
   arduboy.display();
   //delay(60-calculate*30);
   //}
 }
-//绘制屏保-密集运算线条
+//Draw screen saver - intensive computing lines
 void DrawIntensiveComputingLine() {
   for (byte a = 0; a < 4; a++) {
     Line[a] += random(-1, 1);
     if (Line[a] > 128) Line[a] -= 128;
     for (byte b = 0; b < random(3, 6); b++) {
-      arduboy.drawFastHLine(0, Line[a] + random(-10, 10), 128, 1); //水平线
-      arduboy.drawFastVLine(Line[a] + random(-10, 10), 0, 64, 1); //垂直线
+      arduboy.drawFastHLine(0, Line[a] + random(-10, 10), 128, 1); //Horizontal line
+      arduboy.drawFastVLine(Line[a] + random(-10, 10), 0, 64, 1); //Vertical line
     }
   }
 }
-//模拟数字滚轮 Numerical scrolling effect
+//Numerical scrolling effect
 void DisplayNum(int Num) {
   arduboy.setTextSize(6);
   SetTextColor(0);
-  //数字滚轮
+  //Digital scroll wheel
   for (byte i = 0; i < 3; i++) LastValue[i] = int(Value / pow(10, 2 - i)) % 10;
   Value = Num;
   for (byte i = 0; i < 3; i++) {
     SlidingAnimationY[i] += ((int(Value / pow(10, 2 - i)) % 10) - LastValue[i]) * 50;
     if (SlidingAnimationY[i] != 0) SlidingAnimationY[i] += 0.8 * (-SlidingAnimationY[i]);
-    arduboy.fillRect(0 + i * 44, 0, 38, 50, 1); //白底
+    arduboy.fillRect(0 + i * 44, 0, 38, 50, 1); //White background
     for (int ii = -1; ii < 2; ii++) {
       arduboy.setCursor(4 + i * 44, 4 - SlidingAnimationY[i] + ii * 50);
       arduboy.print(LastValue[i] + ii);
     }
   }
-  //刻度标
-  arduboy.fillRect(0, 0, 128, 2, 0); //上遮罩层
-  arduboy.fillRect(0, 48, 128, 16, 0); //下遮罩层
+  //Scale mark
+  arduboy.fillRect(0, 0, 128, 2, 0); //Top mask layer
+  arduboy.fillRect(0, 48, 128, 16, 0); //Bottom mask layer
 }
 
-//数值输入界面
+//Value input interface
 // input value screen
 uint16_t InputScreen(byte appID) {
   lastbutton = (!digitalRead(BUTTON_PIN));
@@ -458,7 +458,7 @@ uint16_t InputScreen(byte appID) {
   return Value;
 }
 
-//设置开机密码
+//Set boot password
 void PasswordSet() {
   Password = InputBigNum(Password, 8);
   beep();
@@ -477,7 +477,7 @@ void BootPassword() {
   }
 }
 
-//欠压报警设置
+//Undervoltage alarm setting
 // information display screen
 void UnderVoltageSet() {
   setRotary(0, 250, 1, UnderVoltage);
@@ -486,7 +486,7 @@ void UnderVoltageSet() {
 }
 
 
-//更换烙铁头预设界面
+//Change soldering iron tip preset interface
 // change tip screen
 void ChangeTipScreen() {
   uint8_t selected = CurrentTip;
@@ -523,7 +523,7 @@ void ChangeTipScreen() {
   CurrentTip = selected;
   GetEEPRomTip(CurrentTip);
   beep();
-  //控制台指令
+  //Console command
   String s = TipName;
   if (s == "EEPROM\0") ViewEEPRom();
   if (s == "RESET.\0") {
@@ -539,7 +539,7 @@ void ChangeTipScreen() {
 
 }
 
-//温度校准界面
+//Temperature calibration interface
 // temperature calibration screen
 void CalibrationScreen() {
   float P[4];
@@ -551,9 +551,9 @@ void CalibrationScreen() {
     do {
       arduboy.clear();
       arduboy.setTextSize(1);
-      SENSORCheck(0);       //读取传感器
+      SENSORCheck(0);       //Read sensor
       SetTemp = getRotary();
-      Thermostat(1);       //加热控制 - ADC数值为基准
+      Thermostat(1);       //Heating control - based on ADC value
 
       arduboy.setCursor(25, 0);
       SetTextColor(0);
@@ -571,7 +571,7 @@ void CalibrationScreen() {
           else arduboy.print(xx[2 * y + x]);
         }
       }
-      //进度条
+      //Progress bar
       ProgressBar(CalStep + 1, 0, 9, 0, 60, 128, 4, 1);
 
       CheckLastButton();
@@ -581,7 +581,7 @@ void CalibrationScreen() {
     beep(); delay (10);
   }
 
-  //关闭加热
+  //Turn off heating
 #if UsePMOS
   analogWrite(CONTROL_PIN, 0);
 #else
@@ -592,11 +592,11 @@ void CalibrationScreen() {
   for (int i = 0; i < 8; i++) if (xx[i] + 5 >= xx[i + 1]) pass = false;
   if (pass) {
     MenuLevel = 7;
-    polyfit(9, xx, CalTemp, 3, P); //拟合程序
+    polyfit(9, xx, CalTemp, 3, P); //Fitting program
     free(xx);
     ShowPTemp(&P[0]);
     if (MenuScreen(0)) {
-      for (uint8_t i = 0; i < 4; i++) PTemp[i] = P[i]; //写入拟合系数
+      for (uint8_t i = 0; i < 4; i++) PTemp[i] = P[i]; //Write fitting coefficients
       free(P);
       UpdateEEPROM();
     }
@@ -619,7 +619,7 @@ void CalibrationScreen() {
   delay(5000);
   resetFunc();
 }
-//显示默认烙铁头温度曲线系数
+//Display default soldering iron tip temperature curve coefficients
 void ShowPTemp(float *p) {
   arduboy.clear();
   arduboy.setTextSize(1);
@@ -645,7 +645,7 @@ void ShowPTemp(float *p) {
     CheckLastButton();
     } while (digitalRead(BUTTON_PIN) || lastbutton);*/
 }
-//命名界面 文本输入界面
+//Naming interface Text input interface
 // input tip name screen
 void InputNameScreen() {
   uint8_t  value;
@@ -680,7 +680,7 @@ void InputNameScreen() {
   return value;
 }
 
-//删除烙铁头
+//Delete soldering iron tip
 // delete tip screen
 void DeleteTipScreen() {
   MenuLevel = 7;
@@ -704,7 +704,7 @@ void DeleteTipScreen() {
   }
 }
 
-//新建烙铁 预设
+//New soldering iron preset
 // add new tip screen
 void AddTipScreen() {
   if (NumberOfTips < TIPMAX) {
@@ -744,8 +744,8 @@ void QRcodeScreen() {
   beep();
 }
 
-//位图缩放 代码片段改自arduboy2
-void drawSlowXYBitmapResize(int x, int y, const uint8_t *bitmap, uint8_t w, uint8_t h, uint8_t size, uint8_t color) {
+//Bitmap scaling code snippet adapted from arduboy2
+void drawBitmapResize(int x, int y, const uint8_t *bitmap, uint8_t w, uint8_t h, uint8_t size, uint8_t color) {
   int16_t xi, yi, byteWidth = (w + 7) / 8;
   for (yi = 0; yi < h; yi ++) {
     for (xi = 0; xi < w; xi ++) {
@@ -756,13 +756,18 @@ void drawSlowXYBitmapResize(int x, int y, const uint8_t *bitmap, uint8_t w, uint
   }
 }
 
-//翻转
+//Flip
 void Flip(bool Fmode) {
-  arduboy.flipVertical(Fmode);
-  arduboy.flipHorizontal(Fmode);
+  if (Fmode) {
+    arduboy.sendLCDCommand(0xA0); //SEGמאッピング倒置
+    arduboy.sendLCDCommand(0xC0); //COM扫描方向倒置
+  } else {
+    arduboy.sendLCDCommand(0xA1); //SEGמאッピング正常
+    arduboy.sendLCDCommand(0xC8); //COM扫描方向正常
+  }
 }
 
-//展示版本号
+//Show version number
 void ShowVersion() {
   arduboy.clear();
   arduboy.setTextSize(2);
@@ -778,15 +783,15 @@ void ShowVersion() {
   delay(300);
 }
 
-/*进度条
-   传入：i=值 a=值的最小值 b=值的最大值 x=左上顶点x轴坐标 y=左上顶点y轴坐标 w=宽度 h=高度 c=颜色
+/*Progress bar
+   Input: i=value, a=minimum value of value, b=maximum value of value, x=x coordinate of upper left vertex, y=y coordinate of upper left vertex, w=width, h=height, c=color
 */
 void ProgressBar(int i, int a, int b, byte x, byte y, byte w, byte h, bool c) {
   SetTextColor(c);
   arduboy.setTextSize(c);
-  //进度标
+  //Progress indicator
   arduboy.setCursor(map(i, a, b, 0, 92), 52);
   arduboy.print(((float)i / (b - a)) * 100); arduboy.print(F("%"));
-  //进度条
+  //Progress bar
   arduboy.fillRect(x, y, map(i, a, b, 0, w), h, c);
 }

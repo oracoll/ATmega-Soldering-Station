@@ -1,10 +1,10 @@
-//********** 曲线拟合程序 **********
-//曲线拟合算法来至https://blog.csdn.net/m0_37362454/article/details/82456616 by欧阳小俊
+//********** Curve fitting program **********
+//The curve fitting algorithm comes from https://blog.csdn.net/m0_37362454/article/details/82456616 by Ouyang Xiaojun
 
 /*==================polyfit(n,x,y,poly_n,a)===================*/
-/*=======拟合y=a0+a1*x+a2*x^2+……+apoly_n*x^poly_n========*/
-/*=====n是数据个数 xy是数据值 poly_n是多项式的项数======*/
-/*===返回a0,a1,a2,……a[poly_n]，系数比项数多一（常数项）=====*/
+/*=======Fit y=a0+a1*x+a2*x^2+……+apoly_n*x^poly_n========*/
+/*=====n is the number of data points, xy is the data value, poly_n is the number of terms in the polynomial======*/
+/*===Returns a0,a1,a2,……a[poly_n], the number of coefficients is one more than the number of terms (constant term)=====*/
 void polyfit(int n, int x[], int y[], int poly_n, float p[])
 {
   int i, j;
@@ -52,11 +52,11 @@ void polyfit(int n, int x[], int y[], int poly_n, float p[])
   free(ata);
 }
 /*============================================================
-  高斯消元法计算得到 n 次多项式的系数
-  n: 系数的个数
-  ata: 线性矩阵
-  sumxy: 线性方程组的Y值
-  p: 返回拟合的结果
+  Gaussian elimination method to calculate the coefficients of the n-th degree polynomial
+  n: number of coefficients
+  ata: linear matrix
+  sumxy: Y value of the system of linear equations
+  p: return the fitting result
   ============================================================*/
 void gauss_solve(int n, float A[], float x[], float b[])
 {
