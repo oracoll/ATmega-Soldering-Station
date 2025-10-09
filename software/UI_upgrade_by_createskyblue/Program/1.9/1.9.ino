@@ -72,7 +72,7 @@ Arduboy2 arduboy;
 #include <PID_v1.h>
 #include <avr/sleep.h>
 // Firmware version
-#define VERSION       "v1.9"
+#define VERSION       "v1.8t7"
 
 // Type of rotary encoder
 #define ROTARY_TYPE   1         // 0: 2 increments/step; 1: 4 increments/step
