@@ -54,7 +54,7 @@
 #include <avr/sleep.h>          // for sleeping during ADC sampling
 
 // Firmware version
-#define VERSION       "v1.9"
+#define VERSION       "v2.0"
 
 // Type of MOSFET
 #define N_MOSFET                // P_MOSFET or N_MOSFET
@@ -133,7 +133,6 @@ uint8_t   BoostTemp   = TEMP_BOOST;
 uint8_t   time2sleep  = TIME2SLEEP;
 uint8_t   time2off    = TIME2OFF;
 uint8_t   timeOfBoost = TIMEOFBOOST;
-uint8_t   MainScrType = MAINSCREEN;
 bool      PIDenable   = PID_ENABLE;
 bool      beepEnable  = BEEP_ENABLE;
 bool      BodyFlip    = BODYFLIP;
@@ -147,7 +146,7 @@ uint8_t   NumberOfTips = 1;
 
 // Menu items
 const char *SetupItems[]       = { "Setup Menu", "Tip Settings", "Temp Settings",
-                                   "Timer Settings", "Control Type", "Main Screen",
+                                   "Timer Settings", "Control Type",
                                    "Buzzer", "Screen Flip", "EC Reverse", "Information", "Return" };
 const char *TipItems[]         = { "Tip:", "Change Tip", "Calibrate Tip", 
                                    "Rename Tip", "Delete Tip", "Add new Tip", "Return" };
@@ -156,15 +155,14 @@ const char *TempItems[]        = { "Temp Settings", "Default Temp", "Sleep Temp"
 const char *TimerItems[]       = { "Timer Settings", "Sleep Timer", "Off Timer", 
                                    "Boost Timer", "Return" };
 const char *ControlTypeItems[] = { "Control Type", "Direct", "PID" };
-const char *MainScreenItems[]  = { "Main Screen", "Big Numbers", "More Infos" };
-const char *StoreItems[]       = { "Store Settings ?", "No", "Yes" };
-const char *SureItems[]        = { "Are you sure ?", "No", "Yes" };
+const char *StoreItems[]       = { "Store Settings?", "No", "Yes" };
+const char *SureItems[]        = { "Are you sure?", "No", "Yes" };
 const char *BuzzerItems[]      = { "Buzzer", "Disable", "Enable" };
 const char *FlipItems[]        = { "Screen Flip", "Disable", "Enable" };
 const char *ECReverseItems[]   = { "EC Reverse", "Disable", "Enable" };
-const char *DefaultTempItems[] = { "Default Temp", "\xB0""C" };
-const char *SleepTempItems[]   = { "Sleep Temp", "\xB0""C" };
-const char *BoostTempItems[]   = { "Boost Temp", "\xB0""C" };
+const char *DefaultTempItems[] = { "Default Temp", "°C" };
+const char *SleepTempItems[]   = { "Sleep Temp", "°C" };
+const char *BoostTempItems[]   = { "Boost Temp", "°C" };
 const char *SleepTimerItems[]  = { "Sleep Timer", "Minutes" };
 const char *OffTimerItems[]    = { "Off Timer", "Minutes" };
 const char *BoostTimerItems[]  = { "Boost Timer", "Seconds" };
@@ -320,6 +318,20 @@ void ROTARYCheck() {
   }
 }
 
+// Bitmaps for icons
+const unsigned char Chip[] PROGMEM = { 0x14, 0xa0, 0x3f, 0xf0, 0x7f, 0xf8, 0xe0, 0x1c, 0x6e, 0x18, 0xec, 0x1c, 0x68, 0x18, 0x60, 0x18, 0xe0, 0x1c, 0x60, 0x58, 0xe0, 0x1c, 0x7f, 0xf8, 0x3f, 0xf0, 0x14, 0xa0 };
+const unsigned char Lightning[] PROGMEM = { 0x0f, 0xe0, 0x1f, 0xc0, 0x1f, 0xc0, 0x3f, 0x80, 0x3f, 0xf8, 0x7f, 0xf0, 0x7f, 0xe0, 0x07, 0xc0, 0x07, 0x80, 0x0f, 0x00, 0x0e, 0x00, 0x1c, 0x00, 0x18, 0x00, 0x10, 0x00 };
+const unsigned char Pointer[] PROGMEM = { 0x20, 0x20, 0x70, 0xf8 };
+
+// Status icon table
+const unsigned char c1[] PROGMEM = { 0x03, 0x00, 0x07, 0x80, 0x0f, 0xc0, 0x0c, 0xc0, 0x1c, 0xe0, 0x1c, 0xe0, 0x3c, 0xf0, 0x3c, 0xf0, 0x7f, 0xf8, 0x7f, 0xf8, 0xfc, 0xfc, 0xfc, 0xfc, 0xff, 0xfc, 0x7f, 0xf8 };
+const unsigned char c2[] PROGMEM = { 0x7f, 0xf8, 0xff, 0xfc, 0xc0, 0x0c, 0xc3, 0x0c, 0xcb, 0x4c, 0xdb, 0x6c, 0xdb, 0x6c, 0xd8, 0x6c, 0xdc, 0xec, 0xcf, 0xcc, 0xc7, 0x8c, 0xc0, 0x0c, 0xff, 0xfc, 0x7f, 0xf8 };
+const unsigned char c3[] PROGMEM = { 0x00, 0x00, 0x06, 0x00, 0x0c, 0x00, 0x18, 0xf8, 0x38, 0xf0, 0x30, 0x30, 0x70, 0x60, 0x70, 0x78, 0x78, 0xf8, 0x78, 0x00, 0x3c, 0x02, 0x3f, 0x0c, 0x1f, 0xf8, 0x0f, 0xf0, 0x03, 0xc0, 0x00, 0x00 };
+const unsigned char c5[] PROGMEM = { 0x7f, 0xf0, 0xff, 0xe0, 0xc0, 0x08, 0xc0, 0x1c, 0xc0, 0x38, 0xc8, 0x70, 0xdc, 0xe4, 0xcf, 0xcc, 0xc7, 0x8c, 0xc3, 0x0c, 0xc0, 0x0c, 0xc0, 0x0c, 0xff, 0xfc, 0x7f, 0xf8 };
+const unsigned char c6[] PROGMEM = { 0x1e, 0x10, 0x33, 0x38, 0x2d, 0x7c, 0x25, 0x38, 0x2d, 0x38, 0x25, 0x38, 0x2d, 0x38, 0x6d, 0x80, 0xde, 0xc0, 0xbf, 0x40, 0xbf, 0x40, 0xde, 0xc0, 0x61, 0x80, 0x3f, 0x00 };
+const unsigned char c7[] PROGMEM = { 0x1f, 0xe0, 0x3f, 0xf0, 0x70, 0x38, 0x60, 0x18, 0x60, 0x18, 0x60, 0x18, 0xff, 0xfc, 0xfc, 0xfc, 0xfc, 0xfc, 0xf8, 0x7c, 0xf8, 0x7c, 0xfc, 0xfc, 0x7f, 0xf8 };
+const unsigned char *C_table[] = {c1, c2, c3, Lightning, c5, c6, c7};
+
 
 // check and activate/deactivate sleep modes
 void SLEEPCheck() {
@@ -456,9 +468,8 @@ void getEEPROM() {
     time2sleep  =  EEPROM.read(7);
     time2off    =  EEPROM.read(8);
     timeOfBoost =  EEPROM.read(9);
-    MainScrType =  EEPROM.read(10);
-    PIDenable   =  EEPROM.read(11);
-    beepEnable  =  EEPROM.read(12);
+    PIDenable   =  EEPROM.read(10);
+    beepEnable  =  EEPROM.read(11);
     BodyFlip    =  EEPROM.read(13);
     ECReverse   =  EEPROM.read(14);
     CurrentTip  =  EEPROM.read(15);
@@ -493,9 +504,8 @@ void updateEEPROM() {
   EEPROM.update( 7, time2sleep);
   EEPROM.update( 8, time2off);
   EEPROM.update( 9, timeOfBoost);
-  EEPROM.update(10, MainScrType);
-  EEPROM.update(11, PIDenable);
-  EEPROM.update(12, beepEnable);
+  EEPROM.update(10, PIDenable);
+  EEPROM.update(11, beepEnable);
   EEPROM.update(13, BodyFlip);
   EEPROM.update(14, ECReverse);
   EEPROM.update(15, CurrentTip);
@@ -520,46 +530,124 @@ void SetFlip() {
 }
 
 
+void DrawNumRect(byte x, byte y, byte size, int n) {
+  u8g.setPrintPos(3 + x, 3 + y);
+  u8g.setFont(u8g_font_fub42n);
+  if (ShowTemp > 500) u8g.print(F("000")); else u8g.print(n);
+  if (size != 6)u8g.drawBox(1 + x, 1 + y, 89, 39);
+}
+
+//Draws the status bar
+void DrawStatusBar(bool color) {
+  SetTextColor(color);
+  u8g.setFont(u8g_font_9x15);
+  //Temperature bar
+  //Box
+  u8g.drawBox(1, 54, 102, 9);
+  //Bar
+  if (ShowTemp <= 500) u8g.drawBox(1, 54, map(ShowTemp, 0, 500, 2, 102), 9);
+  //Indicator part
+  u8g.drawBox(map(Setpoint, 0, 500, 2, 102) - 2, 55, 3, 7);
+  //Let's start with a white background
+  u8g.drawBox(map(Setpoint, 0, 500, 2, 102) - 3, 63, 5, 1);
+  u8g.drawLine(map(Setpoint, 0, 500, 2, 102) - 1, 63, map(Setpoint, 0, 500, 2, 102) - 1, 54);
+
+  //Draw indicator needle
+  u8g.drawBitmapP(map(Setpoint, 0, 500, 2, 102) - 3, 60, 1, 4, Pointer);
+
+  //Power bar
+  u8g.drawBox(104, 54, 23, 9);
+  #if defined (P_MOSFET)
+  u8g.drawBox(104, 54, map(Output, 255, 0, 0, 23), 9);
+  #else
+  u8g.drawBox(104, 54, map(Output, 0, 255, 0, 23), 9);
+  #endif
+
+  SetTextColor(!color);
+  //Enter reverse color
+  u8g.setPrintPos(2, 55); u8g.print(Setpoint, 0);//Probe preset temperature
+  u8g.setPrintPos(105, 55); u8g.print(map(Output, 255, 0, 0, 100)); u8g.print(F("%")); //Power percentage
+  SetTextColor(color);
+}
+
+//Set brush color
+void SetTextColor(bool color) {
+  if (color) {
+    u8g.setColorIndex(1);
+  } else {
+    u8g.setColorIndex(0);
+  }
+}
+
 // draws the main screen
 void MainScreen() {
   u8g.firstPage();
   do {
-    // draw setpoint temperature
+    byte SysState;
+    if (ShowTemp > 500) SysState = 0;
+    else if (inOffMode) {
+      SysState = 1;
+    } else if (inSleepMode) SysState = 2;
+    else if (inBoostMode) SysState = 3;
+    else if (isWorky) SysState = 4;
+    else if (Output < 180) SysState = 5;
+    else SysState = 6;
+
+    u8g.setColorIndex(0); // Invert screen
+    u8g.drawBox(0, 0, 128, 64);
+    u8g.setColorIndex(1); // Normal color
+
+    // Tip name
     u8g.setFont(u8g_font_9x15);
-    u8g.setFontPosTop();
-    u8g.drawStr( 0, 0,  "SET:");
-    u8g.setPrintPos(40,0);
-    u8g.print(Setpoint, 0);
+    u8g.setPrintPos(2, 4);
+    u8g.print(TipName[CurrentTip]);
 
-    // draw status of heater
-    u8g.setPrintPos(83,0);
-    if (ShowTemp > 500)    u8g.print(F("ERROR"));
-    else if (inOffMode)    u8g.print(F("  OFF"));
-    else if (inSleepMode)  u8g.print(F("SLEEP"));
-    else if (inBoostMode)  u8g.print(F("BOOST"));
-    else if (isWorky)      u8g.print(F("WORKY"));
-    else if (Output < 180) u8g.print(F(" HEAT"));
-    else                   u8g.print(F(" HOLD"));
-
-    // rest depending on main screen type
-    if (MainScrType) {
-      // draw current tip and input voltage
-      float fVin = (float)Vin / 1000;     // convert mv in V
-      u8g.setPrintPos( 0,52); u8g.print(TipName[CurrentTip]);
-      u8g.setPrintPos(83,52); u8g.print(fVin, 1); u8g.print(F("V"));
-      // draw current temperature
-      u8g.setFont(u8g_font_freedoomr25n);
-      u8g.setFontPosTop();
-      u8g.setPrintPos(37,22);
-      if (ShowTemp > 500) u8g.print(F("000")); else u8g.print(ShowTemp);
-    } else {
-      // draw current temperature in big figures
-      u8g.setFont(u8g_font_fub42n);
-      u8g.setFontPosTop();
-      u8g.setPrintPos(15,20);
-      if (ShowTemp > 500) u8g.print(F("000")); else u8g.print(ShowTemp);
+    // Status
+    u8g.setPrintPos(94, 5);
+    switch (SysState) {
+      case 1: u8g.print(F("OFF")); break;
+      case 2: u8g.print(F("SLEEP")); break;
+      case 3: u8g.print(F("BOOST")); break;
+      case 4: u8g.print(F("WORKY")); break;
+      case 5: u8g.print(F("HEAT")); break;
+      case 6: u8g.print(F("HOLD")); break;
+      default: u8g.print(F("ERROR")); break;
     }
-  } while(u8g.nextPage());
+
+    // Status icon
+    u8g.drawBitmapP(74, 1, 2, 14, C_table[SysState]);
+
+    // Temperature
+    DrawNumRect(0, 15, 5, ShowTemp);
+
+    // Status bar
+    DrawStatusBar(0);
+
+    // Chip temperature
+    if (getChipTemp() < 80 || ((millis() * 4) / 1000) % 2) {
+      u8g.setPrintPos(91, 20);
+      u8g.print(getChipTemp(), 1);
+      u8g.print((char)248);
+      u8g.print(F("C"));
+      u8g.drawBitmapP(42, 1, 2, 14, Chip);
+    }
+
+    // Input voltage
+    if ((float)Vin / 100 > 12 || ((millis() * 4) / 1000) % 2) {
+      u8g.setPrintPos(91, 28);
+        u8g.print((float)Vin / 1000, 2);
+      u8g.print(F("V"));
+      u8g.drawBitmapP(58, 1, 2, 14, Lightning);
+    }
+    // VCC
+    u8g.setPrintPos(91, 36);
+    u8g.print((float)getVCC() / 1000, 3);
+    u8g.print(F("V"));
+
+    // Raw ADC
+    u8g.setPrintPos(91, 44);
+    u8g.print(RawTemp, 0);
+  } while (u8g.nextPage());
 }
 
 
@@ -578,11 +666,10 @@ void SetupScreen() {
       case 1:   TempScreen(); break;
       case 2:   TimerScreen(); break;
       case 3:   PIDenable = MenuScreen(ControlTypeItems, sizeof(ControlTypeItems), PIDenable); break;
-      case 4:   MainScrType = MenuScreen(MainScreenItems, sizeof(MainScreenItems), MainScrType); break;
-      case 5:   beepEnable = MenuScreen(BuzzerItems, sizeof(BuzzerItems), beepEnable); break;
-      case 6:   BodyFlip = MenuScreen(FlipItems, sizeof(FlipItems), BodyFlip); SetFlip(); break;
-      case 7:   ECReverse = MenuScreen(ECReverseItems, sizeof(ECReverseItems), ECReverse); break;
-      case 8:   InfoScreen(); break;
+      case 4:   beepEnable = MenuScreen(BuzzerItems, sizeof(BuzzerItems), beepEnable); break;
+      case 5:   BodyFlip = MenuScreen(FlipItems, sizeof(FlipItems), BodyFlip); SetFlip(); break;
+      case 6:   ECReverse = MenuScreen(ECReverseItems, sizeof(ECReverseItems), ECReverse); break;
+      case 7:   InfoScreen(); break;
       default:  repeat = false; break;
     }
   }  
@@ -729,9 +816,9 @@ void InfoScreen() {
 
   do {
     Vcc = getVCC();                     // read input voltage
-    float fVcc = (float)Vcc / 1000;     // convert mV in V
+    float fVcc = (float)Vcc / 1000;     // convert mV to V
     Vin = getVIN();                     // read supply voltage
-    float fVin = (float)Vin / 1000;     // convert mv in V
+    float fVin = (float)Vin / 1000;     // convert mV to V
     float fTmp = getChipTemp();         // read cold junction temperature
     u8g.firstPage();
       do {
@@ -897,7 +984,7 @@ uint16_t denoiseAnalog (byte port) {
     result += ADC;                      // add them up
   }
   bitClear (ADCSRA, ADEN);              // disable ADC
-  return (result >> 5);                 // devide by 32 and return value
+  return (result >> 5);                 // divide by 32 and return value
 }
 
 
@@ -933,7 +1020,7 @@ uint16_t getVCC() {
     result += ADC;                      // add them up
   }
   bitClear (ADCSRA, ADEN);              // disable ADC  
-  result >>= 4;                         // devide by 16
+  result >>= 4;                         // divide by 16
   return (1125300L / result);           // 1125300 = 1.1 * 1023 * 1000 
 }
 
