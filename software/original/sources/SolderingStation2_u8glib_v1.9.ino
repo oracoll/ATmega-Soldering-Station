@@ -155,14 +155,14 @@ const char *TempItems[]        = { "Temp Settings", "Default Temp", "Sleep Temp"
 const char *TimerItems[]       = { "Timer Settings", "Sleep Timer", "Off Timer", 
                                    "Boost Timer", "Return" };
 const char *ControlTypeItems[] = { "Control Type", "Direct", "PID" };
-const char *StoreItems[]       = { "Store Settings?", "No", "Yes" };
-const char *SureItems[]        = { "Are you sure?", "No", "Yes" };
+const char *StoreItems[]       = { "Store Settings ?", "No", "Yes" };
+const char *SureItems[]        = { "Are you sure ?", "No", "Yes" };
 const char *BuzzerItems[]      = { "Buzzer", "Disable", "Enable" };
 const char *FlipItems[]        = { "Screen Flip", "Disable", "Enable" };
 const char *ECReverseItems[]   = { "EC Reverse", "Disable", "Enable" };
-const char *DefaultTempItems[] = { "Default Temp", "°C" };
-const char *SleepTempItems[]   = { "Sleep Temp", "°C" };
-const char *BoostTempItems[]   = { "Boost Temp", "°C" };
+const char *DefaultTempItems[] = { "Default Temp", "\xB0""C" };
+const char *SleepTempItems[]   = { "Sleep Temp", "\xB0""C" };
+const char *BoostTempItems[]   = { "Boost Temp", "\xB0""C" };
 const char *SleepTimerItems[]  = { "Sleep Timer", "Minutes" };
 const char *OffTimerItems[]    = { "Off Timer", "Minutes" };
 const char *BoostTimerItems[]  = { "Boost Timer", "Seconds" };
@@ -468,8 +468,9 @@ void getEEPROM() {
     time2sleep  =  EEPROM.read(7);
     time2off    =  EEPROM.read(8);
     timeOfBoost =  EEPROM.read(9);
-    PIDenable   =  EEPROM.read(10);
-    beepEnable  =  EEPROM.read(11);
+    MainScrType =  EEPROM.read(10);
+    PIDenable   =  EEPROM.read(11);
+    beepEnable  =  EEPROM.read(12);
     BodyFlip    =  EEPROM.read(13);
     ECReverse   =  EEPROM.read(14);
     CurrentTip  =  EEPROM.read(15);
@@ -504,8 +505,9 @@ void updateEEPROM() {
   EEPROM.update( 7, time2sleep);
   EEPROM.update( 8, time2off);
   EEPROM.update( 9, timeOfBoost);
-  EEPROM.update(10, PIDenable);
-  EEPROM.update(11, beepEnable);
+  EEPROM.update(10, MainScrType);
+  EEPROM.update(11, PIDenable);
+  EEPROM.update(12, beepEnable);
   EEPROM.update(13, BodyFlip);
   EEPROM.update(14, ECReverse);
   EEPROM.update(15, CurrentTip);
@@ -635,7 +637,7 @@ void MainScreen() {
     // Input voltage
     if ((float)Vin / 100 > 12 || ((millis() * 4) / 1000) % 2) {
       u8g.setPrintPos(91, 28);
-        u8g.print((float)Vin / 1000, 2);
+      u8g.print((float)Vin / 1000, 2);
       u8g.print(F("V"));
       u8g.drawBitmapP(58, 1, 2, 14, Lightning);
     }
@@ -647,6 +649,7 @@ void MainScreen() {
     // Raw ADC
     u8g.setPrintPos(91, 44);
     u8g.print(RawTemp, 0);
+
   } while (u8g.nextPage());
 }
 
@@ -816,9 +819,9 @@ void InfoScreen() {
 
   do {
     Vcc = getVCC();                     // read input voltage
-    float fVcc = (float)Vcc / 1000;     // convert mV to V
+    float fVcc = (float)Vcc / 1000;     // convert mV in V
     Vin = getVIN();                     // read supply voltage
-    float fVin = (float)Vin / 1000;     // convert mV to V
+    float fVin = (float)Vin / 1000;     // convert mv in V
     float fTmp = getChipTemp();         // read cold junction temperature
     u8g.firstPage();
       do {
@@ -984,7 +987,7 @@ uint16_t denoiseAnalog (byte port) {
     result += ADC;                      // add them up
   }
   bitClear (ADCSRA, ADEN);              // disable ADC
-  return (result >> 5);                 // divide by 32 and return value
+  return (result >> 5);                 // devide by 32 and return value
 }
 
 
@@ -1020,7 +1023,7 @@ uint16_t getVCC() {
     result += ADC;                      // add them up
   }
   bitClear (ADCSRA, ADEN);              // disable ADC  
-  result >>= 4;                         // divide by 16
+  result >>= 4;                         // devide by 16
   return (1125300L / result);           // 1125300 = 1.1 * 1023 * 1000 
 }
 
@@ -1037,6 +1040,41 @@ uint16_t getVIN() {
 EMPTY_INTERRUPT (ADC_vect);             // nothing to be done here
 
 
+// get internal temperature by reading ADC channel 8 against 1.1V reference
+double getChipTemp() {
+  uint16_t result = 0;
+  ADCSRA |= bit (ADEN) | bit (ADIF);    // enable ADC, turn off any pending interrupt
+  ADMUX = bit (REFS1) | bit (REFS0) | bit (MUX3); // set reference and mux
+  delay(20);                            // wait for voltages to settle
+  set_sleep_mode (SLEEP_MODE_ADC);      // sleep during sample for noise reduction
+  for (uint8_t i=0; i<32; i++) {        // get 32 readings
+    sleep_mode();                       // go to sleep while taking ADC sample
+    while (bitRead(ADCSRA, ADSC));      // make sure sampling is completed
+    result += ADC;                      // add them up
+  }
+  bitClear (ADCSRA, ADEN);              // disable ADC
+  result >>= 2;                         // devide by 4
+  return ((result - 2594) / 9.76);      // calculate internal temperature in degrees C
+}
+
+
+// get input voltage in mV by reading 1.1V reference against AVcc
+uint16_t getVCC() {
+  uint16_t result = 0;
+  ADCSRA |= bit (ADEN) | bit (ADIF);    // enable ADC, turn off any pending interrupt
+  // set Vcc measurement against 1.1V reference
+  ADMUX = bit (REFS0) | bit (MUX3) | bit (MUX2) | bit (MUX1);
+  delay(1);                             // wait for voltages to settle
+  set_sleep_mode (SLEEP_MODE_ADC);      // sleep during sample for noise reduction
+  for (uint8_t i=0; i<16; i++) {        // get 16 readings
+    sleep_mode();                       // go to sleep while taking ADC sample
+    while (bitRead(ADCSRA, ADSC));      // make sure sampling is completed
+    result += ADC;                      // add them up
+  }
+  bitClear (ADCSRA, ADEN);              // disable ADC
+  result >>= 4;                         // devide by 16
+  return (1125300L / result);           // 1125300 = 1.1 * 1023 * 1000
+}
 // Pin change interrupt service routine for rotary encoder
 ISR (PCINT0_vect) {
   uint8_t a = PINB & 1;
